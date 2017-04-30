@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+
+use strict;
+use warnings;
+
+use lib qw(/nas/scripts/perl_lib);
+
+use SerialArduino;
+ 
+# Inits
+my $BUFFER_SIZE=1280;
+
+# Log for dump
+my $logfile = "raw_capture.log";
+open my $log, '>', $logfile or die "Could not open file $logfile $!";
+
+my $Arduino = SerialArduino->new(
+  port     => '/dev/ttyUSB0',
+  baudrate => 115200, #9600
+ 
+  databits => 8,
+  parity   => 'none',
+);
+ 
+
+# Reading from Arduino via Serial
+my $header;
+my $body = "";
+while (1) {
+	$header = $Arduino->receive();
+	print "ARD:$header\n";
+	last if ($header =~ /Girino ready/);
+}
+print "DB :GOGOGO\n\n";
+
+print "DB :Sending 'c' command. this will add suffix to raw data.\n";
+$Arduino->communicate('c') or die 'Warning, empty string: ', "$!\n";
+$header = $Arduino->receive();
+print "ARD:$header\n";
+
+print "DB :Sending 's' command\n";
+$Arduino->communicate('s') or die 'Warning, empty string: ', "$!\n";
+
+#my $tEnd = time()+4; # 4 seconds in future
+#while (time()< $tEnd) { # end latest after 4 seconds
+#	$str = $str . $Arduino->receive() . "\n";
+#}
+
+while (1) {
+        $header = $Arduino->receive();
+#        print "ARD:$header\n";
+	$body = $body . $header;
+        last if ($header =~ /End of Buffer/);
+}
+
+
+print "DB :Length " . length($body) . "\n";
+
+die "Girinio didn't sent $BUFFER_SIZE + 14 bytes!" if length($body) != ($BUFFER_SIZE+14); #14 = "End of Buffer" + <CR>
+
+$body = substr($body,0,$BUFFER_SIZE);
+
+foreach my $c (split //, $body) {
+	print $log ord($c) . "\n";
+}
+print $log "\n--------------------------------\n";
+
+my $i=1;
+foreach my $c (split //, $body) {
+	print $log "$i:" . ord($c) . ",";
+	$i++;
+}
+
+print $log "\n--------------------------------\n";
+
+# or with a delay
+# 
+#while (1) {
+#    print $Arduino->receive(1), "\n";
+#}
+ 
+
+
