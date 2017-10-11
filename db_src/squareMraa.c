@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	cin >> tmp;
 	cout << "Entering main loop" << endl;
     while (running) {
-        int interval=1000;
+        int interval=5000;
                 gpio_digital->write(HIGH);
                 usleep(interval);
                 gpio_digital->write(LOW);

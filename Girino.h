@@ -62,6 +62,9 @@
 #endif
 
 // Defines for setting and clearing register bits
+// From avr/sfr_defs.h: (SpecialFunctionRegisters)
+// LHS assign of reg: #define _SFR_BYTE(sfr) _MMIO_BYTE(_SFR_ADDR(sfr))
+// Put 1 in the right place: #define _BV(bit) (1 << (bit))
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
